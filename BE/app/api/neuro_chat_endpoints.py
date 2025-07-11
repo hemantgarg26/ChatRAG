@@ -1,7 +1,7 @@
 from app.core.config import settings
 from app.utils.logger import get_logger
-from app.dtos.neuro_chat_dtos import NeuroChatResponse, GetChatResponse, MessageList
-from app.core.neuro_chat_service import get_user_messages
+from app.dtos.neuro_chat_dtos import NeuroChatResponse, GetChatResponse, MessageList, SendMessageRequest, SendMessageResponse
+from app.core.neuro_chat_service import get_user_messages, send_message_to_system
 
 from fastapi import APIRouter, Query
 from typing import List, Optional
@@ -22,3 +22,12 @@ async def get_messages(user_id : str = Query(...), page_number : int = Query(1, 
         status="ok",
         data=result
     )
+
+@router.post("/sendMessage", response_model=SendMessageResponse)
+async def send_message(request: SendMessageRequest):
+    '''
+        Sends a message to the system and returns system response
+    '''
+    logger.info(f"Message sending requested, User ID: {request.user_id}, Message: {request.message}")
+    result: SendMessageResponse = await send_message_to_system(request)
+    return result

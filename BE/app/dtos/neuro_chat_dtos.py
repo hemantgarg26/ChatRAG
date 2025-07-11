@@ -24,3 +24,17 @@ class GetChatResponse(BaseModel):
     status : str
     data : List[MessageList]
 
+
+class SendMessageRequest(BaseModel):
+    """Send Message Request DTO"""
+    user_id: str
+    message: str
+
+
+class SendMessageResponse(BaseModel):
+    """Send Message Response DTO"""
+    status: str
+    message_id: str
+    system_response: str
+    internal_status_code: Optional[ErrorAndSuccessCodes] = None
+

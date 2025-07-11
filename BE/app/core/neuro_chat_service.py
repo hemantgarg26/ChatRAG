@@ -2,12 +2,15 @@ from app.dtos.error_success_codes import ErrorAndSuccessCodes
 from app.dtos.collection_names import ChatOwners, CollectionNames
 from app.utils.db_query import MongoQueryApplicator
 from app.utils.logger import get_logger
-from app.dtos.neuro_chat_dtos import MessageList
+from app.dtos.neuro_chat_dtos import MessageList, SendMessageRequest, SendMessageResponse
 from app.core.config import settings
+from app.core.worker import process_message_task 
 
 from typing import List
 from bson import ObjectId
 from datetime import datetime
+import asyncio
+import uuid
 
 logger = get_logger("neuro_chat_service")
 
@@ -58,3 +61,79 @@ async def get_user_messages(user_id, page_number) -> List[MessageList]:
     except Exception as e:
         logger.error(f"Error while fetching messages: {e}, USER ID: {user_id}, PAGE NUMBER: {page_number}")
         return []
+
+async def send_message_to_system(request: SendMessageRequest) -> SendMessageResponse:
+    """
+    Process user message by saving it to the chats collection and sending to Celery for processing.
+    Args:
+        request (SendMessageRequest): Contains user_id and message
+    Returns:
+        SendMessageResponse: Response containing message_id and status
+    """
+    mongo = None
+    message_id = None
+    
+    try:
+        # First, validate if user exists
+        user_query = {"_id": ObjectId(request.user_id)}
+        user_mongo = MongoQueryApplicator(CollectionNames.USERS.value)
+        users = await user_mongo.find(user_query)
+        
+        if not users or len(users) == 0:
+            logger.info(f"No User Found User Id : {request.user_id}")
+            return SendMessageResponse(
+                status="error",
+                message_id="",
+                system_response="User not found",
+                internal_status_code=ErrorAndSuccessCodes.INVALID_INPUT
+            )
+        
+        # Save user message to chats collection
+        mongo = MongoQueryApplicator(CollectionNames.CHAT.value)
+        message_id = await mongo.insert_one({
+            'user_id': ObjectId(request.user_id),
+            'user_message': request.message,
+            'system_message': "",
+            'system_message_status': ErrorAndSuccessCodes.MESSAGE_UNDER_PROCESSING.value,
+            'created_at': datetime.now(),
+            'updated_at': datetime.now()
+        })
+        
+        logger.info(f"Message saved to database with ID: {message_id} for user: {request.user_id}")
+        
+        # Send to Celery task queue for processing
+        CeleryTaskQueue().process_message(message_id)
+        
+        return SendMessageResponse(
+            status="success",
+            message_id=str(message_id),
+            system_response="Message received and is being processed",
+            internal_status_code=ErrorAndSuccessCodes.SUCCESS
+        )
+        
+    except Exception as e:
+        logger.error(f"Error while processing message: {e}, USER ID: {request.user_id}")        
+        # Update message status to failed if it was created
+        if mongo and message_id:
+            try:
+                await mongo.update_one(
+                    {"_id": ObjectId(message_id)},
+                    {
+                        'system_message_status': ErrorAndSuccessCodes.PROCESSING_ERROR.value,
+                        'system_message': "Error processing message"
+                    }
+                )
+            except Exception as update_error:
+                logger.error(f"Error updating message status: {update_error}")
+        
+        return SendMessageResponse(
+            status="error",
+            message_id=str(message_id) if message_id else "",
+            system_response="Sorry, I encountered an error processing your message. Please try again.",
+            internal_status_code=ErrorAndSuccessCodes.PROCESSING_ERROR
+        )
+
+
+class CeleryTaskQueue:
+    def process_message(self, message_id):
+        return process_message_task.delay(message_id)
