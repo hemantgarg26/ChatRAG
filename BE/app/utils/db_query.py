@@ -29,3 +29,24 @@ class MongoQueryApplicator:
     async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
         filters = filters or {}
         return await self.collection.count_documents(filters)
+
+    async def find_paginated(self, filters: Optional[Dict[str, Any]] = None, 
+                            skip: int = 0, limit: int = 10, 
+                            sort_field: str = None, sort_order: int = 1) -> List[Dict]:
+        """
+        Find documents with pagination and sorting support.
+        
+        Args:
+            filters: Query filters
+            skip: Number of documents to skip
+            limit: Maximum number of documents to return
+            sort_field: Field to sort by
+            sort_order: 1 for ascending, -1 for descending
+        """
+        filters = filters or {}
+        cursor = self.collection.find(filters).skip(skip).limit(limit)
+        
+        if sort_field:
+            cursor = cursor.sort(sort_field, sort_order)
+            
+        return await cursor.to_list(length=limit)

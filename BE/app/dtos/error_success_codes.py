@@ -11,6 +11,7 @@ class ErrorAndSuccessCodes(Enum):
 
     # Processing Status
     MESSAGE_UNDER_PROCESSING = 5
+    MESSAGE_PROCESSING_SUCCESS = 6
 
     #Error
-    PROCESSING_ERROR = 6
+    PROCESSING_ERROR = 7

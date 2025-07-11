@@ -10,8 +10,7 @@ class Settings(BaseModel):
     APP_VERSION: str = "0.1.0"
     MONGO_URI: str = get_key(".env", "MONGO_URI")
     MONGO_DB:str = get_key(".env", "MONGO_DB")
-    GLOBAL_VIDEO_RATE_LIMITING: int = 100   # Per Day
-    USER_VIDEO_RATE_LIMITING: int = 1 # Per Day
+    MESSAGES_PER_PAGE: int = 10
 
     # Celery
     BROKER_URL : str = get_key(".env", "BROKER_URL")

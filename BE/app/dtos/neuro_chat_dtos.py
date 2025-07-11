@@ -14,8 +14,9 @@ class NeuroChatResponse(BaseModel):
 class MessageList(BaseModel):
     """Get Chat"""
     id : str
-    message: str
-    owner : ChatOwners
+    user_message: str
+    system_message: str
+    system_message_status : ErrorAndSuccessCodes
     timestamp : datetime
 
 
