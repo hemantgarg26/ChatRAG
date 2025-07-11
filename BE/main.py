@@ -9,7 +9,8 @@ from app.utils.logger import get_logger
 from app.api.health import router as health_router
 from app.api.neuro_chat_endpoints import router as neuro_chat_router
 from app.utils.db_connect import mongodb
-from bson import ObjectId
+from app.core.pinecone_config import pinecone
+from app.core.embeddings_config import embeddings
 
 logger = get_logger("main")
 
@@ -66,11 +67,15 @@ app.include_router(neuro_chat_router, prefix="/api/chat")
 @app.on_event("startup")
 async def startup_event():
     await mongodb.connect()
+    await pinecone.initialize_connection()
+    await embeddings.initialize_embeddings()
     logger.info("Connected to MongoDB")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await mongodb.close()
+    await pinecone.close()
+    logger.info("Disconnected from MongoDB and Pinecone")
 
 @app.get("/")
 async def root():

@@ -16,6 +16,10 @@ class Settings(BaseModel):
     BROKER_URL : str = get_key(".env", "BROKER_URL")
     BACKEND_URL : str = get_key(".env", "BACKEND_URL") 
 
+    #PINECONE
+    PINECONE_API_KEY: str = get_key(".env", "PINECONE_API_KEY")
+    PINECONE_INDEX_NAME: str = get_key(".env", "PINECONE_INDEX_NAME")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
