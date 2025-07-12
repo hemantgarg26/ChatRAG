@@ -11,6 +11,20 @@ A simple React.js chat interface that connects to the Neuro Chat backend API.
 - **Responsive Design**: Works on desktop and mobile devices
 - **Auto-scroll**: Automatically scrolls to latest messages
 
+## Chat Interface UI
+
+The Neuro Chat interface provides a modern, user-friendly chat experience with the following elements:
+
+- **Header**: Displays the application name "Neuro Chat" and user ID
+- **Message Bubbles**: User messages appear on the right with blue styling
+- **System Responses**: AI responses appear on the left with gray styling
+- **Status Indicators**: Shows message processing status and timestamps
+- **Input Area**: Clean text input with send button at the bottom
+
+![Chat Interface Screenshot](chat-interface-screenshot.png)
+
+The interface handles both successful responses and error states gracefully, providing clear feedback to users about message processing status.
+
 ## Architecture
 
 The frontend implements the following flow:
