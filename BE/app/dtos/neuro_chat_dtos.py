@@ -38,3 +38,18 @@ class SendMessageResponse(BaseModel):
     system_response: str
     internal_status_code: Optional[ErrorAndSuccessCodes] = None
 
+class GetMessagesStatusRequest(BaseModel):
+    """Get Messages Status Request DTO"""
+    user_id: str
+    message_ids: List[str]
+
+class MessageStatus(BaseModel):
+    """Message Status DTO"""
+    message_id: str
+    status: ErrorAndSuccessCodes
+    system_response: Optional[str] = None
+
+class GetMessagesStatusResponse(BaseModel):
+    """Get Messages Status Response DTO"""
+    status: str
+    data: List[MessageStatus]

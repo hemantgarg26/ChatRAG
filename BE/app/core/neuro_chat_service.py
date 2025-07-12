@@ -2,9 +2,10 @@ from app.dtos.error_success_codes import ErrorAndSuccessCodes
 from app.dtos.collection_names import ChatOwners, CollectionNames
 from app.utils.db_query import MongoQueryApplicator
 from app.utils.logger import get_logger
-from app.dtos.neuro_chat_dtos import MessageList, SendMessageRequest, SendMessageResponse
+from app.dtos.neuro_chat_dtos import MessageList, SendMessageRequest, SendMessageResponse, GetMessagesStatusRequest, GetMessagesStatusResponse, MessageStatus
 from app.core.config import settings
 from app.core.worker import process_message_task 
+from app.utils.generic_utils import convert_string_ids_to_object_ids
 
 from typing import List
 from bson import ObjectId
@@ -137,3 +138,36 @@ async def send_message_to_system(request: SendMessageRequest) -> SendMessageResp
 class CeleryTaskQueue:
     def process_message(self, message_id):
         return process_message_task.delay(message_id)
+    
+async def get_messages_status(request: GetMessagesStatusRequest) -> GetMessagesStatusResponse:
+    '''
+        Get status of messages
+    '''
+    logger.info(f"Message statusses requested, User ID: {request.user_id}, Message IDS: {request.message_ids}")
+    res = []
+
+    if not request.message_ids or not request.user_id:
+        logger.error(f"Invalid Request : User ID or Message IDs are missing : {request.user_id}, {request.message_ids}")
+        return GetMessagesStatusResponse(
+            status="error",
+            data=[]
+        )
+
+    object_ids = convert_string_ids_to_object_ids(request.message_ids)
+    mongo = MongoQueryApplicator(CollectionNames.CHAT.value)
+    messages = await mongo.find(
+        {"_id": {"$in": object_ids}, "user_id": ObjectId(request.user_id)},
+    )
+    
+    for message in messages:
+        res.append(MessageStatus(
+            message_id=str(message["_id"]),
+            status=message["system_message_status"],
+            system_response=message["system_message"]
+        ))
+    logger.info(f"Successfully fetched {len(res)} messages status for user {request.user_id}")
+
+    return GetMessagesStatusResponse(
+        status="success",
+        data=res
+    )
