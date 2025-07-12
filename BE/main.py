@@ -67,14 +67,11 @@ app.include_router(neuro_chat_router, prefix="/api/chat")
 @app.on_event("startup")
 async def startup_event():
     await mongodb.connect()
-    await pinecone.initialize_connection()
-    await embeddings.initialize_embeddings()
     logger.info("Connected to MongoDB")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await mongodb.close()
-    await pinecone.close()
     logger.info("Disconnected from MongoDB and Pinecone")
 
 @app.get("/")

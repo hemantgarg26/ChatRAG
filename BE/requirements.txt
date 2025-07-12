@@ -14,3 +14,5 @@ email-validator>=2.0
 langchain-community==0.3.27
 pinecone==7.3.0
 sentence-transformers==5.0.0
+transformers>=4.30.0
+torch>=2.0.0

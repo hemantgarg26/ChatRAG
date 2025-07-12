@@ -15,13 +15,13 @@ class PineconeManager:
         self.pinecone_client: Optional[Pinecone] = None
         self.index_name: str = settings.PINECONE_INDEX_NAME
         self.index = None
-        self.dimension: int = 1536  # For text-embedding-3-small
+        self.dimension: int = 384  # For BAAI/bge-small-en-v1.5
     
     async def initialize_connection(
         self, 
         api_key: Optional[str] = None,
         index_name: str = settings.PINECONE_INDEX_NAME,
-        dimension: int = 1536,
+        dimension: int = 384,
         metric: str = "cosine",
         cloud: str = "aws",
         region: str = "us-east-1"
@@ -37,6 +37,11 @@ class PineconeManager:
             cloud: Cloud provider for serverless
             region: Region for serverless deployment
         """
+        # Check if already initialized
+        if self.is_initialized():
+            print(f"Pinecone connection already initialized for index '{self.index_name}'")
+            return
+            
         try:
             # Initialize Pinecone client
             api_key = api_key or os.getenv("PINECONE_API_KEY")
@@ -97,7 +102,7 @@ class PineconeManager:
             vectors: List of vector dictionaries with id, values, and metadata
         """
         if self.index is None:
-            raise RuntimeError("Pinecone connection not initialized.")
+            raise RuntimeError("Pinecone connection not initialized while upserting vectors")
         
         # Process vectors to ensure metadata compatibility
         processed_vectors = []
@@ -127,7 +132,7 @@ class PineconeManager:
             Query results from Pinecone
         """
         if self.index is None:
-            raise RuntimeError("Pinecone connection not initialized.")
+            raise RuntimeError("Pinecone connection not initialized while querying vectors")
         
         return self.index.query(
             vector=vector,
@@ -136,4 +141,13 @@ class PineconeManager:
             include_metadata=include_metadata
         )
     
+    def is_initialized(self) -> bool:
+        """
+        Check if Pinecone connection is initialized.
+        
+        Returns:
+            True if initialized, False otherwise
+        """
+        return self.pinecone_client is not None and self.index is not None
+
 pinecone = PineconeManager()

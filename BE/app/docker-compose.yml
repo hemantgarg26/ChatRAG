@@ -16,12 +16,13 @@ services:
 
   worker:
     build: .
-    command: celery -A app.core.worker.celery worker --loglevel=info --logfile=logs/celery.log
+    command: celery -A app.core.worker.celery worker --loglevel=info --logfile=logs/celery.log --concurrency=1
     volumes:
       - .:/app
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_WORKER_CONCURRENCY=4
     depends_on:
       - web
       - redis

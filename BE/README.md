@@ -23,7 +23,7 @@
 
 ## For Local Testing
 1. Start Redis Container in a different terminal ```docker run -p 6379:6379 redis```
-2. Start Celery task Queue in a different terminal ```celery -A app.core.worker.celery worker --loglevel=info```
+2. Start Celery task Queue in a different terminal ```celery -A app.core.worker.celery worker --loglevel=info --concurrency=1```
 
 
 The application will start at `http://127.0.0.1:8000`
