@@ -43,6 +43,22 @@ Key Notes
 
 ## Architecture
 
+### SendMessage API Flow Diagram
+
+The following diagram illustrates the complete flow of the `sendMessage` API, including the client-side application, Celery task queue, and Redis broker:
+
+![SendMessage Flow Diagram](sendmessage_flow_diagram.md)
+
+For a detailed view of the flow diagram, see: [SendMessage Flow Diagram](sendmessage_flow_diagram.md)
+
+### Flow Summary
+
+1. **Client Request**: React frontend sends message via `POST /api/chat/sendMessage`
+2. **API Processing**: FastAPI validates user, saves message to MongoDB, queues task via Redis
+3. **Background Processing**: Celery worker processes message using embeddings, Pinecone similarity search, and GPT-2 response generation
+4. **Status Polling**: Frontend polls for completion status and updates UI
+5. **Error Handling**: Comprehensive error handling throughout the pipeline
+
 ## Architecture Components
 1. ```FastAPI```
     Purpose: Python web framework used for building APIs.
@@ -86,14 +102,6 @@ Key Notes
     Integration:
       Works with Redis (or RabbitMQ) as the broker
       Worker tasks are defined and run via worker.py
-6. ```Amazon S3 (Object Storage)```
-    Purpose: Store all large unstructured data such as:
-    Uploaded video files
-    Generated thumbnails
-    Processed video outputs
-    Why S3:
-      Scalable, durable (99.999999999%), and cost-effective
-      Supports direct upload/download and pre-signed URLs for secure access
 
 # Implementation Decisions
 1. Created an Application Level Middleware for centralized authentication and authorization
@@ -105,5 +113,3 @@ Key Notes
 7. Saving status (Saved, Processing, Processed, Failed), for each task in mongoDb.
 8. Created an API for fetching task status, Can be extended to use sockets.
 
-# Swagger Docs
-![alt text](SwaggerDocumentation.png)
